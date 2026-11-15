@@ -780,7 +780,7 @@ body:has(#view-map.active) #map-home-near-volume { display:inline-flex; align-it
 
   // Isi endpoint dengan URL backend/proxy milik pengembang bila mode AI generatif diaktifkan.
   // Jangan menaruh API key Gemini langsung di HTML/JavaScript publik.
-  window.NDY_AI_CONFIG=window.NDY_AI_CONFIG||{endpoint:''};
+  window.NDY_AI_CONFIG=Object.assign({endpoint:'https://ndy-ai-assistant.pgridata.workers.dev',autoSpeak:true},window.NDY_AI_CONFIG||{});
   const history=[];
   let recognition=null, listening=false, busy=false;
   const continentFacts={
@@ -854,9 +854,10 @@ body:has(#view-map.active) #map-home-near-volume { display:inline-flex; align-it
   async function askAI(question){
     const endpoint=(window.NDY_AI_CONFIG&&window.NDY_AI_CONFIG.endpoint||'').trim();
     if(endpoint){
-      const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:question,history:history.slice(-8),context:getCurrentContext(),system:'Kamu adalah NDY, sahabat dan tutor ramah untuk siswa kelas VI SD. Jawab dalam bahasa Indonesia yang jelas, aman, sesuai usia, utamakan materi enam benua dan IPAS. Berikan penjelasan bertahap dan contoh sederhana.'})});
+      const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:question,history:history.slice(-8),context:JSON.stringify(getCurrentContext()),system:'Kamu adalah NDY, sahabat dan tutor ramah untuk siswa kelas VI SD. Jawab dalam bahasa Indonesia yang jelas, aman, sesuai usia, utamakan materi enam benua dan IPAS. Berikan penjelasan bertahap dan contoh sederhana.'})});
       if(!response.ok)throw new Error('Layanan AI tidak dapat dihubungi ('+response.status+').');
       const data=await response.json();
+      if(data&&data.ok===false)throw new Error(data.error||'Layanan AI menolak permintaan.');
       const answer=data.answer||data.reply||data.text;
       if(typeof answer!=='string'||!answer.trim())throw new Error('Respons AI tidak memiliki teks jawaban.');
       return answer.trim();
